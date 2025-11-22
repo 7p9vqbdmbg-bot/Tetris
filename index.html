@@ -2,60 +2,56 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8" />
-<title>Мини-Тетрис</title>
+<title>Тетрис для мобильного и ПК</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-  body { display: flex; justify-content: center; margin-top: 50px; background: #222; color: #eee; font-family: monospace; }
-  canvas { background: #000; border: 2px solid #555; }
+  body { display: flex; flex-direction: column; align-items: center; margin: 0; background: #222; color: #eee; font-family: monospace; }
+  #game { background: #000; border: 2px solid #444;
+    width: 90vw; max-width: 400px; height: 160vw; max-height: 800px;}
+  .controls {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 16px;
+    margin-top: 10px;
+  }
+  .controls button {
+    font-size: 2em; padding: 18px; border-radius: 14px; border: 2px solid #555;
+    background: #444; color: #eee; margin-bottom: 8px; touch-action: manipulation;
+  }
 </style>
 </head>
 <body>
 <canvas id="game" width="200" height="400"></canvas>
+<div class="controls">
+  <button onclick="moveLeft()" ontouchstart="moveLeft()">◀️</button>
+  <button onclick="rotate()" ontouchstart="rotate()">🔄</button>
+  <button onclick="moveRight()" ontouchstart="moveRight()">▶️</button>
+  <button onclick="moveDown()" ontouchstart="moveDown()">⏬</button>
+</div>
 <script>
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
-const ROWS = 20, COLS = 10, BLOCK_SIZE = 20;
+const ROWS = 20, COLS = 10, BLOCK_SIZE = canvas.width / COLS;
 
-const COLORS = [
-  null,
-  'cyan', 'blue', 'orange', 'yellow', 'green', 'purple', 'red'
-];
-
-// Тетромино (формы)
+const COLORS = [ null,'cyan','blue','orange','yellow','green','purple','red'];
 const SHAPES = [
-  [],
-  [[1,1,1,1]],              // I
-  [[2,0,0],[2,2,2]],        // J
-  [[0,0,3],[3,3,3]],        // L
-  [[4,4],[4,4]],            // O
-  [[0,5,5],[5,5,0]],        // S
-  [[0,6,0],[6,6,6]],        // T
-  [[7,7,0],[0,7,7]]         // Z
+  [], [[1,1,1,1]], [[2,0,0],[2,2,2]], [[0,0,3],[3,3,3]], [[4,4],[4,4]],
+  [[0,5,5],[5,5,0]], [[0,6,0],[6,6,6]], [[7,7,0],[0,7,7]]
 ];
 
-// Создаем пустое игровое поле
 function createMatrix(rows, cols) {
   const matrix = [];
   while (rows--) matrix.push(new Array(cols).fill(0));
   return matrix;
 }
-
 const board = createMatrix(ROWS, COLS);
 
-// Текущая фигура
-const player = {
-  pos: {x: 3, y: 0},
-  matrix: SHAPES[1]
-};
+const player = { pos: {x: 3, y: 0}, matrix: SHAPES[1] };
 
-// Рисуем блок
 function drawBlock(x, y, color) {
   ctx.fillStyle = color;
   ctx.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
   ctx.strokeStyle = '#222';
   ctx.strokeRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
 }
-
-// Рисуем матрицу (текущую фигуру или поле)
 function drawMatrix(matrix, offset) {
   matrix.forEach((row, y) => {
     row.forEach((value, x) => {
@@ -65,8 +61,6 @@ function drawMatrix(matrix, offset) {
     });
   });
 }
-
-// Перемещение фигуры вниз
 function playerDrop() {
   player.pos.y++;
   if (collide(board, player)) {
@@ -76,8 +70,6 @@ function playerDrop() {
   }
   dropCounter = 0;
 }
-
-// Проверка столкновений
 function collide(board, player) {
   const m = player.matrix;
   const o = player.pos;
@@ -92,8 +84,6 @@ function collide(board, player) {
   }
   return false;
 }
-
-// Включаем фигуру в игровое поле
 function merge(board, player) {
   player.matrix.forEach((row, y) => {
     row.forEach((value, x) => {
@@ -103,8 +93,6 @@ function merge(board, player) {
     });
   });
 }
-
-// Сброс фигуры (новая фигура)
 function playerReset() {
   const pieces = 'TJLOSZI';
   const index = pieces.length * Math.random() | 0;
@@ -116,8 +104,6 @@ function playerReset() {
     board.forEach(row => row.fill(0));
   }
 }
-
-// Отрисовка фрейма
 function draw() {
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -125,12 +111,9 @@ function draw() {
   drawMatrix(player.matrix, player.pos);
 }
 
-// Глобальные таймеры
 let dropCounter = 0;
 let dropInterval = 1000;
 let lastTime = 0;
-
-// Игровой цикл
 function update(time = 0) {
   const deltaTime = time - lastTime;
   lastTime = time;
@@ -142,36 +125,41 @@ function update(time = 0) {
   requestAnimationFrame(update);
 }
 
-// Управление с клавиатуры
-document.addEventListener('keydown', event => {
-  if (event.key === 'ArrowLeft') {
-    player.pos.x--;
-    if (collide(board, player)) player.pos.x++;
-  } else if (event.key === 'ArrowRight') {
-    player.pos.x++;
-    if (collide(board, player)) player.pos.x--;
-  } else if (event.key === 'ArrowDown') {
-    playerDrop();
-  } else if (event.key === 'ArrowUp') {
-    player.matrix = rotate(player.matrix);
-    if (collide(board, player)) {
-      player.matrix = rotate(player.matrix, true);
-    }
+// Кнопки управления для мобильных
+window.moveLeft = function() {
+  player.pos.x--;
+  if (collide(board, player)) player.pos.x++;
+};
+window.moveRight = function() {
+  player.pos.x++;
+  if (collide(board, player)) player.pos.x--;
+};
+window.rotate = function() {
+  player.matrix = rotate(player.matrix);
+  if (collide(board, player)) {
+    player.matrix = rotate(player.matrix, true);
   }
+};
+window.moveDown = function() {
+  playerDrop();
+};
+
+// Поддержка стрелок для десктопа
+document.addEventListener('keydown', event => {
+  if (event.key === 'ArrowLeft') window.moveLeft();
+  else if (event.key === 'ArrowRight') window.moveRight();
+  else if (event.key === 'ArrowDown') window.moveDown();
+  else if (event.key === 'ArrowUp') window.rotate();
 });
 
-// Поворот матрицы (фигуры)
 function rotate(matrix, reverse = false) {
   const m = matrix;
   const N = m.length;
   const result = createMatrix(N, N);
   for (let y = 0; y < N; y++) {
     for (let x = 0; x < N; x++) {
-      if (!reverse) {
-        result[x][N - 1 - y] = m[y][x];
-      } else {
-        result[N - 1 - x][y] = m[y][x];
-      }
+      if (!reverse) result[x][N - 1 - y] = m[y][x];
+      else result[N - 1 - x][y] = m[y][x];
     }
   }
   return result;
